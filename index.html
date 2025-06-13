@@ -10,6 +10,8 @@
     body {
       font-family: 'Inter', sans-serif; /* A common Tailwind font */
       overscroll-behavior-y: contain; /* Prevents pull-to-refresh on mobile if scrolling within body */
+      text-size-adjust: 100%; /* CSS compatibility fix */
+      -webkit-text-size-adjust: 100%; /* For older Safari */
     }
     ::-webkit-scrollbar {
       width: 8px;
@@ -52,9 +54,7 @@
     "react": "https://esm.sh/react@18.3.1",
     "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
     "jspdf": "https://esm.sh/jspdf@2.5.1",
-    "html2canvas": "https://esm.sh/html2canvas@1.4.1",
-    "react-dom/": "https://esm.sh/react-dom@18.3.1/",
-    "react/": "https://esm.sh/react@18.3.1/"
+    "html2canvas": "https://esm.sh/html2canvas@1.4.1"
   }
 }
 </script>
@@ -389,11 +389,9 @@
 
     const TreatmentImpactSection = ({ treatments, selectedTreatments, onTreatmentToggle, patientData, baseKFRE2yr, baseKFRE5yr, adjustedKFRE2yr, adjustedKFRE5yr, sequentialTreatmentData }) => {
         const TreatmentItem = ({treatment, isChecked, onToggle, disabled}) => {
-            // const reductionPercent = (treatment.reduction * 100).toFixed(0); // Removed as per user request
             return (
                 <div className={`p-4 rounded-lg flex items-center justify-between ${disabled ? 'bg-slate-100 opacity-70' : 'bg-slate-50 hover:bg-slate-100'} transition-colors`}>
                     <div><Checkbox id={`treatment-${treatment.id}`} label={<><span className="font-semibold">{treatment.name}</span><p className="text-xs text-slate-500">{treatment.description}</p></>} checked={isChecked} onChange={() => onToggle(treatment.id)} disabled={disabled} /></div>
-                    {/* Removed: <span className={`text-lg font-bold ${disabled && !isChecked ? 'text-slate-400' : 'text-green-600'}`}>-{reductionPercent}%</span> */}
                 </div>);
         };
         const CumulativeImpactDisplay = ({ label, baseKFRE, adjustedKFRE }) => {
@@ -514,6 +512,7 @@
             const textArray = Array.isArray(text) ? text : [text];
             let newY = currentY;
 
+            pdf.setFontSize(fontSize);
             textArray.forEach(line => {
                 pdf.text(line, x, newY, options);
                 newY += fontSize * 0.352778 * lineHeightFactor; 
@@ -549,12 +548,12 @@
         
         pdf.setFont('helvetica', 'normal');
 
-        pdf.setFontSize(FONT_SIZE_TITLE); pdf.setTextColor(67, 56, 202);
+        pdf.setTextColor(67, 56, 202);
         const reportTitle = 'Kidney Health Dashboard Report';
         const titleWidth = pdf.getStringUnitWidth(reportTitle) * FONT_SIZE_TITLE / pdf.internal.scaleFactor;
         yPos = addTextWithYUpdate(reportTitle, (210 - titleWidth) / 2, yPos, { fontSize: FONT_SIZE_TITLE });
         
-        pdf.setFontSize(FONT_SIZE_NORMAL); pdf.setTextColor(100, 116, 139);
+        pdf.setTextColor(100, 116, 139);
         const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
         const dateText = `Date: ${currentDate}`;
         const dateWidth = pdf.getStringUnitWidth(dateText) * FONT_SIZE_NORMAL / pdf.internal.scaleFactor;
@@ -580,7 +579,11 @@
         
         pdf.addPage(); yPos = MARGIN;
         yPos = addSectionTitle('Treatment Impact Simulation', yPos);
-        yPos = addTextWithYUpdate("The following charts illustrate the potential impact if standard treatments are applied sequentially based on the patient's profile.", MARGIN, yPos, { fontSize: FONT_SIZE_SMALL, fontStyle: 'italic' });
+        
+        // **FIXED PDF FONT STYLE**
+        pdf.setFont('helvetica', 'italic');
+        yPos = addTextWithYUpdate("The following charts illustrate the potential impact if standard treatments are applied sequentially based on the patient's profile.", MARGIN, yPos, { fontSize: FONT_SIZE_SMALL });
+        pdf.setFont('helvetica', 'normal');
         yPos += 2;
 
         await addImageToPdf('treatment-impact-details-table-section');
@@ -588,7 +591,6 @@
 
         if (yPos > 297 - MARGIN - 40) { pdf.addPage(); yPos = MARGIN; } 
         yPos = addSectionTitle('Disclaimer', yPos);
-        pdf.setFontSize(FONT_SIZE_SMALL);
         const disclaimerText = "This tool provides estimates based on established risk models. Results should be interpreted by healthcare professionals in the context of individual patient care. This tool is for informational purposes only and does not constitute medical advice.";
         const splitDisclaimer = pdf.splitTextToSize(disclaimerText, 210 - 2 * MARGIN);
         addTextWithYUpdate(splitDisclaimer, MARGIN, yPos, { fontSize: FONT_SIZE_SMALL });
