@@ -65,7 +65,7 @@
     Generating PDF, please wait...
   </div>
 
-  <script type="text/babel" data-presets="env,react">
+  <script type="text/babel" data-type="module" data-presets="env,react">
     import React, { useState, useEffect, useCallback, useMemo } from 'react';
     import ReactDOM from 'react-dom/client';
     import jsPDF from 'jspdf';
@@ -580,7 +580,6 @@
         pdf.addPage(); yPos = MARGIN;
         yPos = addSectionTitle('Treatment Impact Simulation', yPos);
         
-        // **FIXED PDF FONT STYLE**
         pdf.setFont('helvetica', 'italic');
         yPos = addTextWithYUpdate("The following charts illustrate the potential impact if standard treatments are applied sequentially based on the patient's profile.", MARGIN, yPos, { fontSize: FONT_SIZE_SMALL });
         pdf.setFont('helvetica', 'normal');
